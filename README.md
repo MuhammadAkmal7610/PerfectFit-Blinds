@@ -44,7 +44,22 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ## Deployment and SEO
 
-Deploy the Next.js app to a Node-compatible host such as Vercel, set the environment variables above, and run the SQL schema against the production Supabase project before accepting leads. Configure rate limits at the hosting edge and verify the production domain in the canonical metadata URL in `app/layout.tsx`.
+### Vercel checklist
+
+1. Import the repository into Vercel and keep the framework preset as **Next.js**.
+2. Add these environment variables in **Project Settings → Environment Variables** for Production, Preview and Development as appropriate:
+	- `NEXT_PUBLIC_SUPABASE_URL` — the Supabase API URL, for example `https://your-project-ref.supabase.co`.
+	- `SUPABASE_SERVICE_ROLE_KEY` — the server-only Supabase secret/service-role key. Never use a `NEXT_PUBLIC_` name for this key.
+	- `ADMIN_USERNAME` — the private dashboard username.
+	- `ADMIN_PASSWORD` — a strong, unique dashboard password.
+	- `ADMIN_SESSION_SECRET` — at least 32 random characters.
+3. In the production Supabase project, run `supabase/schema.sql` once in **SQL Editor**. The website cannot create the table automatically.
+4. Deploy with the default Vercel commands. The project scripts already provide `npm run build`.
+5. After deployment, test `/quote` by submitting a test enquiry, then sign in at `/admin/login` and confirm it appears in the dashboard.
+6. Configure the production domain in `app/layout.tsx` and `app/sitemap.ts` if it differs from the current canonical URL.
+7. Keep `.env` out of Git. Use Vercel's encrypted environment variables instead, and rotate any Supabase keys or admin credentials that have been exposed.
+
+Configure rate limits at the hosting edge before accepting production leads, and define a retention period and privacy notice for customer data.
 
 Page-specific titles, descriptions and canonical paths are defined alongside each public route. The site uses semantic page landmarks, a single primary heading per page, descriptive image labels, internal links and responsive layouts.
 

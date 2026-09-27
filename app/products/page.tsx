@@ -69,15 +69,19 @@ export default function ProductsPage() {
 
           <div className="mt-14 grid gap-x-8 md:grid-cols-2 xl:grid-cols-3">
             {products.map((product, index) => (
-              <article key={product.name} className="border-t border-slate-300 py-6">
+              <Link
+                key={product.name}
+                href="/quote"
+                className="group block border-t border-slate-300 py-6 transition-colors hover:border-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-4"
+              >
                 <div className="mb-5 flex items-center justify-between">
                   <span className="text-xs font-semibold text-sky-800">0{index + 1}</span>
-                  <Check aria-hidden="true" className="h-4 w-4 text-sky-700" />
+                  <Check aria-hidden="true" className="h-4 w-4 text-sky-700 transition-transform group-hover:translate-x-1" />
                 </div>
-                <h2 className="font-heading text-xl font-semibold text-slate-900">{product.name}</h2>
+                <h2 className="font-heading text-xl font-semibold text-slate-900 group-hover:text-sky-800">{product.name}</h2>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
                 <p className="mt-4 text-sm font-medium text-slate-800">{product.ideal}</p>
-              </article>
+              </Link>
             ))}
           </div>
 
