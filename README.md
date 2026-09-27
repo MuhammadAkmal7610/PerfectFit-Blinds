@@ -48,7 +48,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 1. Import the repository into Vercel and keep the framework preset as **Next.js**.
 2. Add these environment variables in **Project Settings → Environment Variables** for Production, Preview and Development as appropriate:
-	- `NEXT_PUBLIC_SUPABASE_URL` — the Supabase API URL, for example `https://your-project-ref.supabase.co`.
+	- `SUPABASE_URL` — the server-only Supabase API URL, for example `https://your-project-ref.supabase.co`.
 	- `SUPABASE_SERVICE_ROLE_KEY` — the server-only Supabase secret/service-role key. Never use a `NEXT_PUBLIC_` name for this key.
 	- `ADMIN_USERNAME` — the private dashboard username.
 	- `ADMIN_PASSWORD` — a strong, unique dashboard password.
