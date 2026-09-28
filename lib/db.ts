@@ -26,11 +26,15 @@ export interface EnquiryRecord {
 }
 
 function getDatabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
   if (!url || !serviceRoleKey) {
-    throw new Error("Supabase server credentials are not configured.");
+    const missing = [
+      !url && "SUPABASE_URL",
+      !serviceRoleKey && "SUPABASE_SERVICE_ROLE_KEY",
+    ].filter(Boolean);
+    throw new Error(`Missing required server environment variables: ${missing.join(", ")}.`);
   }
 
   return createClient(url, serviceRoleKey, {

@@ -13,6 +13,13 @@ function getDatabaseErrorCode(error: unknown) {
 }
 
 function getDatabaseErrorResponse(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error && error.message.startsWith("Missing required server environment variables:")) {
+    return NextResponse.json(
+      { error: "Database configuration is incomplete. Set the required server variables in Vercel and redeploy." },
+      { status: 503 },
+    );
+  }
+
   const code = getDatabaseErrorCode(error);
 
   if (code === "PGRST205") {

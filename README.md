@@ -53,6 +53,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 	- `ADMIN_USERNAME` — the private dashboard username.
 	- `ADMIN_PASSWORD` — a strong, unique dashboard password.
 	- `ADMIN_SESSION_SECRET` — at least 32 random characters.
+	- `ADMIN_SESSION_SECRET` — at least 32 random characters.
+	Save the variables and redeploy; existing deployments do not receive newly added values.
 3. In the production Supabase project, run `supabase/schema.sql` once in **SQL Editor**. The website cannot create the table automatically.
 4. Deploy with the default Vercel commands. The project scripts already provide `npm run build`.
 5. After deployment, test `/quote` by submitting a test enquiry, then sign in at `/admin/login` and confirm it appears in the dashboard.
