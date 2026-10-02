@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, Check } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
@@ -64,7 +65,7 @@ export default function ProductsPage() {
                 From a practical blackout blind to a softly tailored finish, we’ll help you find a style that feels right for your room and budget.
               </p>
             </div>
-            <div role="img" aria-label="A light-filled living room with carefully chosen furnishings" className="min-h-[260px] rounded-lg bg-cover bg-center sm:min-h-[340px]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85')" }} />
+            <div className="relative min-h-[260px] overflow-hidden rounded-lg sm:min-h-[340px]"><Image src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85" alt="Light-filled living room with carefully chosen furnishings" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" /></div>
           </div>
 
           <div className="mt-14 grid gap-x-8 md:grid-cols-2 xl:grid-cols-3">

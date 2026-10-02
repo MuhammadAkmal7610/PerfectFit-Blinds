@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test lib/*.test.mjs",
+    "test:e2e": "node --test tests/enquiry-flow.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

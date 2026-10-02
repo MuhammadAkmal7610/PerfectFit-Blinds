@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, BadgeCheck, CheckCircle2, Clock3, MapPin, ShieldCheck, Star, SunMedium } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { LocalBusinessJsonLd } from "@/components/LocalBusinessJsonLd";
 
 export const metadata: Metadata = {
   title: "Made-to-Measure Blinds in Manchester",
@@ -30,12 +32,14 @@ const benefits = [
 export default function HomePage() {
   return (
     <>
+      <LocalBusinessJsonLd />
       <SiteHeader />
       <main className="bg-white text-slate-800">
         <section
-        className="relative flex min-h-[610px] items-center overflow-hidden bg-slate-800 bg-cover bg-center sm:min-h-[680px]"
-        style={{ backgroundImage: "linear-gradient(90deg, rgba(23,23,23,0.82) 0%, rgba(23,23,23,0.60) 45%, rgba(23,23,23,0.12) 100%), url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2400&q=90')" }}
+        className="relative flex min-h-[610px] items-center overflow-hidden bg-slate-800 sm:min-h-[680px]"
       >
+        <Image src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2400&q=90" alt="Light-filled Manchester home with elegant made-to-measure window furnishings" fill preload sizes="100vw" className="object-cover object-center" />
+        <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(23,23,23,0.82)_0%,rgba(23,23,23,0.60)_45%,rgba(23,23,23,0.12)_100%)]" />
         <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="max-w-2xl text-white">
             <span className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-white/85">
@@ -104,7 +108,7 @@ export default function HomePage() {
 
       <section className="bg-slate-50">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-20">
-          <div role="img" aria-label="A thoughtfully furnished living room with warm daylight" className="min-h-[280px] rounded-lg bg-cover bg-center sm:min-h-[390px]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=85')" }} />
+          <div className="relative min-h-[280px] overflow-hidden rounded-lg sm:min-h-[390px]"><Image src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=85" alt="Thoughtfully furnished living room with warm daylight" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" /></div>
           <div className="max-w-xl">
             <p className="text-sm font-semibold text-sky-800">Made for your home</p>
             <h2 className="mt-3 font-heading text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">Good advice makes all the difference.</h2>

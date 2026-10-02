@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, BadgeCheck, CircleDashed, Gauge, LogOut, PhoneCall, Search, TrendingUp } from "lucide-react";
-import type { EnquiryRecord } from "@/lib/db";
+import { ArrowUpRight, BadgeCheck, CircleDashed, Gauge, LogOut, Moon, PhoneCall, Search, Sun, TrendingUp } from "lucide-react";
+import type { EnquiryRecord, LeadStatusHistoryRecord } from "@/lib/db";
+import { blindOptions } from "@/lib/enquiry-schema";
 
 const statusOptions = [
   "New",
@@ -18,12 +19,26 @@ function formatDate(value: string, options: Intl.DateTimeFormatOptions) {
   return new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB", options);
 }
 
+function startOfWeek(value: Date) {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return date;
+}
+
 export function AdminDashboard() {
   const router = useRouter();
   const [leads, setLeads] = useState<EnquiryRecord[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [blindFilter, setBlindFilter] = useState("All blind types");
+  const [postcodeFilter, setPostcodeFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [history, setHistory] = useState<LeadStatusHistoryRecord[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -43,6 +58,11 @@ export function AdminDashboard() {
   };
 
   useEffect(() => {
+    const storedTheme = window.localStorage.getItem("perfectfit-admin-dark");
+    if (storedTheme === "true") {
+      document.documentElement.classList.add("admin-dark-active");
+      window.requestAnimationFrame(() => setDarkMode(true));
+    }
     const controller = new AbortController();
 
     const loadInitialLeads = async () => {
@@ -64,6 +84,26 @@ export function AdminDashboard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (selectedId === null) {
+      return;
+    }
+
+    let active = true;
+    fetch(`/api/enquiries/${selectedId}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load history.");
+        return response.json();
+      })
+      .then((result) => {
+        if (active) setHistory(result.history ?? []);
+      })
+      .catch(() => {
+        if (active) setHistory([]);
+      });
+    return () => { active = false; };
+  }, [selectedId]);
+
   const summary = useMemo(() => ({
     total: leads.length,
     new: leads.filter((lead) => lead.status === "New").length,
@@ -74,6 +114,46 @@ export function AdminDashboard() {
 
   const selectedLead = leads.find((lead) => lead.id === selectedId) ?? leads[0];
 
+  const filteredLeads = useMemo(() => leads.filter((lead) => {
+    const createdDate = lead.created_at.slice(0, 10);
+    return (statusFilter === "All statuses" || lead.status === statusFilter)
+      && (blindFilter === "All blind types" || lead.blind_type === blindFilter)
+      && lead.postcode.toLowerCase().includes(postcodeFilter.trim().toLowerCase())
+      && (!dateFrom || createdDate >= dateFrom)
+      && (!dateTo || createdDate <= dateTo);
+  }), [leads, statusFilter, blindFilter, postcodeFilter, dateFrom, dateTo]);
+
+  const weeklyLeads = useMemo(() => {
+    const currentWeek = startOfWeek(new Date());
+    return Array.from({ length: 6 }, (_, index) => {
+      const weekStart = new Date(currentWeek);
+      weekStart.setDate(currentWeek.getDate() - (5 - index) * 7);
+      const nextWeek = new Date(weekStart);
+      nextWeek.setDate(weekStart.getDate() + 7);
+      return {
+        label: weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+        count: leads.filter((lead) => {
+          const created = new Date(lead.created_at);
+          return created >= weekStart && created < nextWeek;
+        }).length,
+      };
+    });
+  }, [leads]);
+
+  const funnel = [
+    { label: "New", count: leads.filter((lead) => lead.status === "New").length },
+    { label: "Quote sent", count: leads.filter((lead) => lead.status === "Quote Sent").length },
+    { label: "Won", count: summary.won },
+  ];
+  const maximumWeeklyCount = Math.max(1, ...weeklyLeads.map((week) => week.count));
+
+  const toggleTheme = () => {
+    const nextTheme = !darkMode;
+    setDarkMode(nextTheme);
+    window.localStorage.setItem("perfectfit-admin-dark", String(nextTheme));
+    document.documentElement.classList.toggle("admin-dark-active", nextTheme);
+  };
+
   const updateStatus = async (id: number, status: string) => {
     try {
       const response = await fetch(`/api/enquiries/${id}`, {
@@ -82,6 +162,8 @@ export function AdminDashboard() {
         body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error("Unable to update status.");
+      const result = await response.json();
+      setHistory(result.history ?? []);
       await fetchLeads();
     } catch {
       setLoadError("The lead status could not be updated. Please try again.");
@@ -100,13 +182,16 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`admin-theme min-h-screen space-y-6 p-4 sm:p-6 ${darkMode ? "admin-dark" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-sky-800">Lead dashboard</p>
           <h1 className="mt-2 font-heading text-3xl font-semibold text-slate-900">Enquiry overview</h1>
         </div>
         <div className="flex items-center gap-2">
+          <button type="button" onClick={toggleTheme} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300">
+            {darkMode ? <Sun aria-hidden="true" className="h-4 w-4" /> : <Moon aria-hidden="true" className="h-4 w-4" />}
+          </button>
           <button type="button" onClick={fetchLeads} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300">
             <Search aria-hidden="true" className="h-4 w-4" /> Refresh
           </button>
@@ -136,24 +221,74 @@ export function AdminDashboard() {
         ))}
       </div>
 
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="weekly-chart-heading">
+          <h2 id="weekly-chart-heading" className="font-heading text-lg font-semibold text-slate-900">Leads per week</h2>
+          <div className="mt-5 grid h-40 grid-cols-6 items-end gap-3" role="img" aria-label={`Weekly enquiry counts: ${weeklyLeads.map((week) => `${week.label}, ${week.count}`).join("; ")}`}>
+            {weeklyLeads.map((week) => (
+              <div key={week.label} className="flex h-full flex-col items-center justify-end gap-2">
+                <span className="text-xs font-medium text-slate-600">{week.count}</span>
+                <div className="flex h-28 w-full items-end rounded-sm bg-slate-100">
+                  <div className="w-full rounded-sm bg-sky-700 transition-[height]" style={{ height: `${Math.max(week.count ? 10 : 0, (week.count / maximumWeeklyCount) * 100)}%` }} />
+                </div>
+                <span className="text-center text-[11px] text-slate-500">{week.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="funnel-heading">
+          <h2 id="funnel-heading" className="font-heading text-lg font-semibold text-slate-900">Conversion funnel</h2>
+          <div className="mt-5 space-y-4">
+            {funnel.map((stage) => (
+              <div key={stage.label}>
+                <div className="mb-1 flex justify-between text-sm"><span className="text-slate-700">{stage.label}</span><span className="font-semibold text-slate-900">{stage.count}</span></div>
+                <div className="h-2 overflow-hidden rounded-sm bg-slate-100"><div className="h-full rounded-sm bg-emerald-700" style={{ width: `${leads.length ? Math.max(stage.count ? 5 : 0, stage.count / leads.length * 100) : 0}%` }} /></div>
+              </div>
+            ))}
+            <p className="border-t border-slate-100 pt-3 text-xs text-slate-500">{summary.won} of {summary.total} total leads won</p>
+          </div>
+        </section>
+      </div>
+
       <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
         <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="font-heading text-xl font-semibold text-slate-900">Recent enquiries</h2>
-            <span className="text-sm text-slate-500">{leads.length} total</span>
+            <span className="text-sm text-slate-500">{filteredLeads.length} of {leads.length}</span>
+          </div>
+
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <label className="text-xs font-medium text-slate-600">Search postcode
+              <span className="relative mt-1 block"><Search aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input type="search" value={postcodeFilter} onChange={(event) => setPostcodeFilter(event.target.value)} placeholder="M28 3AA" className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900" /></span>
+            </label>
+            <label className="text-xs font-medium text-slate-600">Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"><option>All statuses</option>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select>
+            </label>
+            <label className="text-xs font-medium text-slate-600">Blind type
+              <select value={blindFilter} onChange={(event) => setBlindFilter(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"><option>All blind types</option>{blindOptions.map((blind) => <option key={blind}>{blind}</option>)}</select>
+            </label>
+            <label className="text-xs font-medium text-slate-600">From date
+              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900" />
+            </label>
+            <label className="text-xs font-medium text-slate-600">To date
+              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900" />
+            </label>
+            <button type="button" onClick={() => { setStatusFilter("All statuses"); setBlindFilter("All blind types"); setPostcodeFilter(""); setDateFrom(""); setDateTo(""); }} className="self-end rounded-md border border-slate-200 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">Clear filters</button>
           </div>
 
           {loading ? (
             <p className="py-12 text-center text-sm text-slate-500">Loading enquiries…</p>
           ) : leads.length === 0 ? (
             <p className="py-12 text-center text-sm text-slate-500">No enquiries yet.</p>
+          ) : filteredLeads.length === 0 ? (
+            <p className="py-12 text-center text-sm text-slate-500">No enquiries match these filters.</p>
           ) : (
             <div className="space-y-2">
-              {leads.map((lead) => (
+              {filteredLeads.map((lead) => (
                 <button
                   type="button"
                   key={lead.id}
-                  onClick={() => setSelectedId(lead.id)}
+                  onClick={() => { setHistory([]); setSelectedId(lead.id); }}
                   aria-pressed={selectedLead?.id === lead.id}
                   className={`flex w-full items-center justify-between gap-4 rounded-md border p-4 text-left transition-colors ${selectedLead?.id === lead.id ? "border-sky-400 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50"}`}
                 >
@@ -204,6 +339,20 @@ export function AdminDashboard() {
                   {statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
               </label>
+
+              <section className="mt-6 border-t border-slate-200 pt-5" aria-labelledby="status-history-heading">
+                <h3 id="status-history-heading" className="font-heading text-lg font-semibold text-slate-900">Status history</h3>
+                {history.length ? (
+                  <ol className="mt-4 space-y-4 border-l border-slate-200 pl-4">
+                    {history.map((entry) => (
+                      <li key={entry.id} className="relative text-sm before:absolute before:-left-[21px] before:top-1.5 before:h-2 before:w-2 before:rounded-full before:bg-sky-700">
+                        <p className="font-medium text-slate-900">{entry.old_status ? `Moved from ${entry.old_status} to ${entry.new_status}` : `Lead created as ${entry.new_status}`}</p>
+                        <p className="mt-1 text-xs text-slate-500">{new Date(entry.changed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} by {entry.changed_by}</p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : <p className="mt-3 text-sm text-slate-500">No status history available.</p>}
+              </section>
             </>
           ) : (
             <div className="py-12 text-center text-sm text-slate-500">Select an enquiry to view details.</div>

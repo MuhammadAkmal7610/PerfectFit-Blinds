@@ -94,6 +94,7 @@ export function EnquiryForm() {
         <label className="block text-sm font-medium text-slate-700">
           Postcode
           <input {...register("postcode")} autoComplete="postal-code" aria-invalid={Boolean(errors.postcode)} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 uppercase outline-none transition focus:border-sky-700 focus:bg-white focus:ring-2 focus:ring-sky-100" placeholder="M28 3AA" />
+          <span className="mt-1 block text-xs text-slate-500">We cover Manchester and nearby areas, including Bolton, Stockport, Oldham and Wigan.</span>
           {errors.postcode && <span className="mt-1 block text-xs text-red-600">{errors.postcode.message}</span>}
         </label>
 
@@ -135,6 +136,11 @@ export function EnquiryForm() {
           </select>
           {errors.service_required && <span className="mt-1 block text-xs text-red-600">{errors.service_required.message}</span>}
         </label>
+      </div>
+
+      <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+        <label htmlFor="website">Leave this field empty</label>
+        <input id="website" {...register("website")} tabIndex={-1} autoComplete="off" />
       </div>
 
       <label className="block text-sm font-medium text-slate-700">

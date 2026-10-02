@@ -80,6 +80,10 @@ export async function isAdminAuthenticated() {
   return verifySessionToken(sessionValue, config.username, config.secret);
 }
 
+export function getConfiguredAdminUsername() {
+  return getAdminConfiguration()?.username ?? "Admin";
+}
+
 export async function setAdminSession() {
   const config = getAdminConfiguration();
   if (!config) throw new Error("Admin authentication is not configured.");

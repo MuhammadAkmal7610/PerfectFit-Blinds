@@ -95,3 +95,51 @@ textarea {
   background: #e0d2b9;
   color: #171717;
 }
+
+.admin-theme {
+  --admin-surface: #ffffff;
+  --admin-background: #f1f0ec;
+  --admin-foreground: #171717;
+  --admin-muted: #6f6b64;
+  background: var(--admin-background);
+  color: var(--admin-foreground);
+}
+
+.admin-dark {
+  --admin-surface: #20211f;
+  --admin-background: #151614;
+  --admin-foreground: #f4f1e9;
+  --admin-muted: #b0ada5;
+  color-scheme: dark;
+}
+
+html.admin-dark-active body main:has(.admin-dark) {
+  background-color: #151614;
+}
+
+.admin-dark .bg-white,
+.admin-dark .bg-slate-50,
+.admin-dark .bg-slate-100 {
+  background-color: var(--admin-surface);
+}
+
+.admin-dark .text-slate-900,
+.admin-dark .text-slate-800,
+.admin-dark .text-slate-700 {
+  color: var(--admin-foreground);
+}
+
+.admin-dark .text-slate-600,
+.admin-dark .text-slate-500 {
+  color: var(--admin-muted);
+}
+
+.admin-dark .border-slate-100,
+.admin-dark .border-slate-200,
+.admin-dark .border-slate-300 {
+  border-color: #41423e;
+}
+
+.admin-dark .hover\:bg-slate-50:hover {
+  background-color: #2b2d29;
+}

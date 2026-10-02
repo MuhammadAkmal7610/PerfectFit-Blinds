@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { MapPin, ShieldCheck, Star } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -28,7 +29,7 @@ export default function AboutPage() {
                 From first advice to accurate measuring and careful installation, we keep the process straightforward and personal.
               </p>
             </div>
-            <div role="img" aria-label="A warm, inviting home interior with soft natural light" className="min-h-[300px] rounded-lg bg-cover bg-center sm:min-h-[420px]" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85')" }} />
+            <div className="relative min-h-[300px] overflow-hidden rounded-lg sm:min-h-[420px]"><Image src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85" alt="Warm home interior with soft natural light" fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" /></div>
           </div>
 
         <div className="mt-16 grid gap-x-8 md:grid-cols-3">

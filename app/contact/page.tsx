@@ -1,9 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { LocalBusinessJsonLd } from "@/components/LocalBusinessJsonLd";
 
 export const metadata: Metadata = {
   title: "Contact PerfectFit Blinds | Manchester",
@@ -14,6 +16,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
+      <LocalBusinessJsonLd />
       <SiteHeader />
       <main className="flex-1 bg-slate-50 py-8 text-slate-800 sm:py-12 lg:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -31,12 +34,16 @@ export default function ContactPage() {
               <p className="mt-5 text-sm leading-6 text-slate-600">We visit homes across Manchester, Salford, Bolton, Oldham, Stockport and nearby areas.</p>
             </div>
 
-            <div role="img" aria-label="A softly lit living room with made-to-measure window furnishings" className="flex min-h-[340px] flex-col justify-end rounded-lg bg-cover bg-center p-6 sm:min-h-[440px] sm:p-8" style={{ backgroundImage: "linear-gradient(0deg, rgba(23,23,23,0.72), rgba(23,23,23,0.04) 75%), url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=85')" }}>
+            <div className="relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-lg p-6 sm:min-h-[440px] sm:p-8">
+              <Image src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=85" alt="Softly lit living room with made-to-measure window furnishings" fill sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
+              <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(0deg,rgba(23,23,23,0.72),rgba(23,23,23,0.04)_75%)]" />
+              <div className="relative z-10">
               <h2 className="font-heading text-2xl font-semibold text-white">A home visit, at your pace.</h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-white/85">See fabric and finish samples in your own light, with friendly advice and no pressure to decide.</p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link href="/quote" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-sky-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-800">Arrange a free visit</Link>
                 <a href="tel:01612345678" className="inline-flex min-h-12 items-center justify-center rounded-md border border-white/60 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20">Call now</a>
+              </div>
               </div>
             </div>
           </div>

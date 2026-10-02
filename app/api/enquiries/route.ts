@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { createEnquiry } from "@/lib/db";
+import { consumeEnquiryRateLimit, createEnquiry } from "@/lib/db";
+import { sendEnquiryNotifications } from "@/lib/email";
 import { isAdminAuthenticated } from "@/lib/admin";
 import { enquirySchema } from "@/lib/enquiry-schema";
+import { getEnquiryFingerprint } from "@/lib/rate-limit";
 
 function getDatabaseErrorCode(error: unknown) {
   if (!(error instanceof Error) || !error.cause || typeof error.cause !== "object") {
@@ -22,7 +24,7 @@ function getDatabaseErrorResponse(error: unknown, fallbackMessage: string) {
 
   const code = getDatabaseErrorCode(error);
 
-  if (code === "PGRST205") {
+  if (code === "PGRST205" || code === "PGRST202") {
     return NextResponse.json(
       { error: "Database setup is incomplete. Run supabase/schema.sql in the Supabase SQL Editor." },
       { status: 503 },
@@ -56,7 +58,20 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const parsed = enquirySchema.safeParse(body);
+
+    if (typeof body?.website === "string" && body.website.trim()) {
+      return NextResponse.json({ success: true }, { status: 201 });
+    }
+
+    const allowed = await consumeEnquiryRateLimit(getEnquiryFingerprint(request));
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a few minutes and try again." },
+        { status: 429, headers: { "Retry-After": "600" } },
+      );
+    }
+
+    const parsed = enquirySchema.omit({ website: true }).safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -65,12 +80,13 @@ export async function POST(request: Request) {
       );
     }
 
-    await createEnquiry({
+    const enquiry = await createEnquiry({
       ...parsed.data,
       message: parsed.data.message || null,
     });
+    const notificationsSent = await sendEnquiryNotifications(enquiry);
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true, notificationsSent }, { status: 201 });
   } catch (error) {
     console.error("Failed to create enquiry", error);
     return getDatabaseErrorResponse(error, "Unable to submit your request right now.");

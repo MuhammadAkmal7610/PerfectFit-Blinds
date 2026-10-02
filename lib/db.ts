@@ -25,6 +25,15 @@ export interface EnquiryRecord {
   updated_at: string;
 }
 
+export interface LeadStatusHistoryRecord {
+  id: number;
+  lead_id: number;
+  old_status: EnquiryStatus | null;
+  new_status: EnquiryStatus;
+  changed_at: string;
+  changed_by: string;
+}
+
 function getDatabaseClient() {
   const url = process.env.SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -69,6 +78,20 @@ export async function getEnquiryById(id: number): Promise<EnquiryRecord | undefi
   return (data as EnquiryRecord | null) ?? undefined;
 }
 
+export async function getLeadStatusHistory(id: number): Promise<LeadStatusHistoryRecord[]> {
+  const { data, error } = await getDatabaseClient()
+    .from("lead_status_history")
+    .select("*")
+    .eq("lead_id", id)
+    .order("changed_at", { ascending: false });
+
+  if (error) {
+    throw new Error("Unable to read enquiry status history.", { cause: error });
+  }
+
+  return (data ?? []) as LeadStatusHistoryRecord[];
+}
+
 export async function createEnquiry(input: {
   name: string;
   telephone: string;
@@ -93,17 +116,29 @@ export async function createEnquiry(input: {
   return data as EnquiryRecord;
 }
 
-export async function updateEnquiryStatus(id: number, status: EnquiryStatus): Promise<EnquiryRecord | undefined> {
-  const { data, error } = await getDatabaseClient()
-    .from("enquiries")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("*")
-    .maybeSingle();
+export async function consumeEnquiryRateLimit(fingerprint: string): Promise<boolean> {
+  const { data, error } = await getDatabaseClient().rpc("consume_enquiry_rate_limit", {
+    p_fingerprint: fingerprint,
+    p_limit: 5,
+  });
+
+  if (error) {
+    throw new Error("Unable to check enquiry rate limit.", { cause: error });
+  }
+
+  return data === true;
+}
+
+export async function updateEnquiryStatus(id: number, status: EnquiryStatus, changedBy: string): Promise<EnquiryRecord | undefined> {
+  const { data, error } = await getDatabaseClient().rpc("update_enquiry_status", {
+    p_lead_id: id,
+    p_new_status: status,
+    p_changed_by: changedBy,
+  });
 
   if (error) {
     throw new Error("Unable to update the enquiry in the database.", { cause: error });
   }
 
-  return (data as EnquiryRecord | null) ?? undefined;
+  return ((data as EnquiryRecord[] | null)?.[0]) ?? undefined;
 }

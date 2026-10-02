@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const serviceablePostcodeAreas = ["M", "BL", "SK", "OL", "WN", "WA", "BB", "HD", "HX", "PR"];
+
+export function isServiceablePostcode(postcode: string) {
+  const area = postcode.trim().toUpperCase().match(/^[A-Z]{1,2}/)?.[0];
+  return Boolean(area && serviceablePostcodeAreas.includes(area));
+}
+
 export const blindOptions = [
   "Perfect Fit blinds",
   "Roller blinds",
@@ -20,7 +27,10 @@ export const enquirySchema = z.object({
     "Please enter a valid telephone number.",
   ),
   email: z.email("Please enter a valid email address.").max(254, "Email address is too long."),
-  postcode: z.string().trim().regex(/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i, "Please enter a valid UK postcode."),
+  postcode: z.string()
+    .trim()
+    .regex(/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i, "Please enter a valid UK postcode.")
+    .refine(isServiceablePostcode, "We currently serve Manchester and nearby areas. Please contact us to check your postcode."),
   blind_type: z.enum(blindOptions, { error: "Please choose the type of blinds." }),
   number_of_windows: z.coerce.number().int().min(1, "At least 1 window is required.").max(100, "Please contact us for projects over 100 windows."),
   preferred_date: z.string()
@@ -37,6 +47,7 @@ export const enquirySchema = z.object({
     }, "Please choose today or a future date."),
   service_required: z.enum(serviceOptions),
   message: z.string().trim().max(500, "Message must be 500 characters or fewer.").optional().or(z.literal("")),
+  website: z.string().max(200).optional().or(z.literal("")),
 });
 
 export type EnquiryFormInput = z.input<typeof enquirySchema>;
